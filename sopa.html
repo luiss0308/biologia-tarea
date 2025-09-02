@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Sopa de Letras - Línea de Tiempo Científica</title>
+<style>
+  body{
+    font-family: Arial, sans-serif;
+    background: #f5f6fa;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  h1{color:#2d3436}
+  .grid{
+    display: grid;
+    grid-template-columns: repeat(15, 35px);
+    grid-template-rows: repeat(15, 35px);
+    gap: 2px;
+    margin: 20px 0;
+  }
+  .cell{
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #dcdde1;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+  }
+  .cell.selected{ background: #74b9ff; color:#fff }
+  .cell.found{ background: #55efc4; color:#000 }
+  .word-list{ margin-top:20px; }
+  .word-list li{ list-style:none; padding:4px 0; }
+  .found-word{ text-decoration: line-through; color: green }
+   nav {
+      background-color: #e3f2fd;
+      padding: 10px 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: flex-end;
+      margin: 0;
+      padding: 0;
+    }
+    nav li {
+      margin-left: 20px;
+    }
+    nav a {
+      text-decoration: none;
+      color: #0077b6;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+</style>
+</head>
+<body>
+  
+<nav>
+  <ul>
+    <li><a href="linea del tiempo.html">Inicio</a></li>
+    <li><a href="sopa.html">Dinámica</a></li>
+    <li><a href="temas.html">Videos</a></li>
+  </ul>
+</nav>
+  <h1>Sopa de Letras</h1>
+  <p>Encuentra los siguientes conceptos históricos:</p>
+  <ul class="word-list" id="wordList">
+    <li>ARISTOTELES</li>
+    <li>COPERNICO</li>
+    <li>NEWTON</li>
+    <li>DARWIN</li>
+    <li>MENDEL</li>
+    <li>OPARIN</li>
+    <li>HUBBLE</li>
+    <li>HOYLE</li>
+    <li>CRICK</li>
+    <li>WMAP</li>
+  </ul>
+  <div class="grid" id="grid"></div>
+
+<script>
+const words = ["ARISTOTELES","COPERNICO","NEWTON","DARWIN","MENDEL","OPARIN","HUBBLE","HOYLE","CRICK","WMAP"];
+const size = 15;
+const gridEl = document.getElementById("grid");
+const wordListEl = document.getElementById("wordList").children;
+
+let grid = Array.from({length:size}, ()=>Array(size).fill(""));
+
+function normalize(str){
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function placeWord(word){
+  word = normalize(word);
+  const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+  let placed=false;
+  while(!placed){
+    const dir = dirs[Math.floor(Math.random()*dirs.length)];
+    let row = Math.floor(Math.random()*size);
+    let col = Math.floor(Math.random()*size);
+    if(row+dir[0]*word.length >= size || row+dir[0]*word.length < 0) continue;
+    if(col+dir[1]*word.length >= size || col+dir[1]*word.length < 0) continue;
+    let fits=true;
+    for(let i=0;i<word.length;i++){
+      let r=row+dir[0]*i, c=col+dir[1]*i;
+      if(grid[r][c]!="" && grid[r][c]!=word[i]){ fits=false; break;}
+    }
+    if(fits){
+      for(let i=0;i<word.length;i++){
+        let r=row+dir[0]*i, c=col+dir[1]*i;
+        grid[r][c]=word[i];
+      }
+      placed=true;
+    }
+  }
+}
+words.forEach(placeWord);
+
+const alphabet = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+for(let r=0;r<size;r++){
+  for(let c=0;c<size;c++){
+    if(grid[r][c]=="") grid[r][c]=alphabet[Math.floor(Math.random()*alphabet.length)];
+  }
+}
+
+let cells = [];
+for(let r=0;r<size;r++){
+  for(let c=0;c<size;c++){
+    const div=document.createElement("div");
+    div.className="cell";
+    div.dataset.row=r;
+    div.dataset.col=c;
+    div.textContent=grid[r][c];
+    gridEl.appendChild(div);
+    cells.push(div);
+  }
+}
+
+let selected=[];
+function checkSelection(){
+  let text = selected.map(cell=>cell.textContent).join("");
+  let rev = selected.map(cell=>cell.textContent).reverse().join("");
+  let normText = normalize(text);
+  let normRev = normalize(rev);
+  
+  for(let i=0;i<words.length;i++){
+    if(normText===words[i] || normRev===words[i]){
+      selected.forEach(cell=>cell.classList.add("found"));
+      wordListEl[i].classList.add("found-word");
+    }
+  }
+  selected.forEach(cell=>cell.classList.remove("selected"));
+  selected=[];
+}
+
+cells.forEach(cell=>{
+  cell.addEventListener("click", ()=>{
+    if(cell.classList.contains("found")) return;
+    if(cell.classList.contains("selected")){
+      checkSelection();
+    } else {
+      cell.classList.add("selected");
+      selected.push(cell);
+    }
+  });
+});
+</script>
+</body>
+</html>
